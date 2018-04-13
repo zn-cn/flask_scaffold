@@ -10,5 +10,5 @@ def load_config(env='debug'):
     return Config
 
 
-Config = load_config(os.environ.get('PYTHON_ENV'))
+Config = load_config(os.environ.get('WEB_ENV', "dev"))
 CONFIG = Config()

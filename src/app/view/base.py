@@ -1,12 +1,17 @@
 import jwt
-import logging
 
 from functools import wraps
 from flask import jsonify, request
 from redis import Redis
-from config import config
+from config import CONFIG
+from app.model.log import Logger
+from app.model.ret_code import RetCode
+from app.model.ret_msg import RetMessage
+from app.util.common import ret_json
 
-redis = Redis(host=config.REDIS_HOST, port=config.REDIS_PORT)
+base_logger = Logger(dir_name="app/view/base", file_name="app.view.base")
+
+redis = Redis(host=CONFIG.REDIS_HOST, port=CONFIG.REDIS_PORT)
 
 
 def login_required(func):
@@ -15,28 +20,11 @@ def login_required(func):
         token = request.headers.get('Authorization')
         try:
             payload = jwt.decode(
-                token, config.SECRET, algorithms=[config.JWT_ALGORITHM])
-        except Exception as e:
-            logging.warn('login error: ' + e.message)
-            return jsonify({'successful': False, 'error': 'Unauthorized!'})
-        return func(*args, **kw)
+                token, CONFIG.SECRET, algorithms=[CONFIG.JWT_ALGORITHM])
+        except Exception:
+            base_logger.error(RetMessage.NOT_AUTH)
+            return ret_json(
+                ret_code=RetCode.NOT_AUTH, error_msg=RetMessage.NOT_AUTH)
+        return func(payload, *args, **kw)
 
     return wrapper
-
-
-def cached(timeout=5 * 60, key='view/%s'):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kw):
-            cache_key = key % request.url
-            logging.info('cache_key: ' + cache_key)
-            rv = redis.get(cache_key)
-            if rv is not None:
-                return rv
-            rv = func(*args, **kw)
-            redis.set(cache_key, rv)
-            return rv
-
-        return wrapper
-
-    return decorator

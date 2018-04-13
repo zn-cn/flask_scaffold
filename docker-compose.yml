@@ -5,11 +5,14 @@ services:
       build: .
       volumes:
         - /etc/localtime:/etc/localtime:ro
+        - ./log:/app/log
       ports:
         - "3031:3031"
       environment:
         - TZ=Asia/Shanghai
-        - PYTHON_ENV=dev
+        - WEB_ENV=dev
+        - PORT=3031
+        - HOST=0.0.0.0
       container_name: flask_scaffold_app
       depends_on:
         - mysql
@@ -32,6 +35,7 @@ services:
         - MYSQL_PASSWORD=molscar_password
     redis:
       image: redis:4.0.8
+      container_name: flask_scaffold_redis
       expose: 
         - "6379"
       volumes:
