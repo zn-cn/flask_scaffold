@@ -1,0 +1,7 @@
+flask
+logging
+PyJWT
+redis
+pymysql
+uwsgi
+requests
